@@ -29,20 +29,16 @@ pip install -r requirements.txt
 ```bash
 VK_APP_TOKEN={your_vk_application_token}
 VK_GROUP_ID={vk_group_id}
-MAX_NUMBER=2548
 ```
-Ключ ВК получите согласно документации [Implicit Flow для получения ключа доступа пользователя](https://vk.com/dev/implicit_flow_user), поместите в `VK_APP_TOKEN`.
+Получите ключ ВК согласно документации [Implicit Flow для получения ключа доступа пользователя](https://vk.com/dev/implicit_flow_user), поместите в `VK_APP_TOKEN`.
 
 В `VK_GROUP_ID` поместите идентификатор группы/сообщества ВК для размещения комиксов.
 *[Как узнать ID профиля или сообщества?](https://vk.com/faq18062)*
 
-`MAX_NUMBER` содержит число комиксов предлагаемых сервисом  [xkcd.com](https://xkcd.com/). На момент публикации программы - 2548.
-*[Уточнить число комиксов](https://xkcd.com/info.0.json).*
-
 ## Как запустить
 Запустите программу командой:
 ```
-python main.py
+$ python main.py
 ```
 ### Цель проекта
 Код написан в образовательных целях на онлайн-курсе для веб-разработчиков [dvmn.org](https://dvmn.org/).
