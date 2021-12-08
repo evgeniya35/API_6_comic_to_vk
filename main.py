@@ -21,7 +21,7 @@ def raise_vk_exception(response):
         raise requests.exceptions.HTTPError(message)
 
 
-def load_photo(url, file_name, params=None):
+def download_photo(url, file_name, params=None):
     response = requests.get(url=url, params=params)
     response.raise_for_status()
     with open(file_name, mode='wb') as file:
@@ -127,7 +127,7 @@ def main():
     comic_num = randint(0, get_last_comic_number())
     alt, url = get_commic(comic_num)
     file_name = os.path.join(folder, url.split('/')[-1])
-    load_photo(url, file_name)
+    download_photo(url, file_name)
     try:
         upload_address = get_upload_addr(vk_app_token, vk_group_id)
         photo = upload_photo(
