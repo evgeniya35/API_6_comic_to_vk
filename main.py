@@ -47,8 +47,8 @@ def upload_photo(url, vk_app_token, owner_id, file_name):
         payload = {
             'photo': file
         }
-        response = requests.post(url, files=payload)
-        response.raise_for_status()
+    response = requests.post(url, files=payload)
+    response.raise_for_status()
     return response.json()
 
 
@@ -93,6 +93,11 @@ def remove_photo(file_name):
     if os.path.isfile(file_name):
         os.remove(file_name)
 
+def get_last_comic_number():
+    url = 'https://xkcd.com/info.0.json'
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()['num']
 
 def main():
     logging.basicConfig(
@@ -103,7 +108,7 @@ def main():
     load_dotenv()
     vk_app_token = os.environ.get('VK_APP_TOKEN')
     vk_group_id = os.environ.get('VK_GROUP_ID')
-    comic_num = randint(0, int(os.environ.get('MAX_NUMBER')))
+    comic_num = randint(0, get_last_comic_number())
     folder = os.path.join(os.getcwd(), 'Files')
     os.makedirs(folder, exist_ok=True)
     alt, url = get_commic(comic_num)
