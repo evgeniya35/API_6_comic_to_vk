@@ -47,7 +47,7 @@ def upload_photo(url, vk_app_token, owner_id, file_name):
         payload = {
             'photo': file
         }
-    response = requests.post(url, files=payload)
+        response = requests.post(url, files=payload)
     response.raise_for_status()
     return response.json()
 
