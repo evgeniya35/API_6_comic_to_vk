@@ -52,13 +52,13 @@ def upload_photo(url, vk_app_token, owner_id, file_name):
     return response.json()
 
 
-def save_photo(vk_app_token, owner_id, photo, server, hash, caption='caption'):
+def save_photo(vk_app_token, owner_id, photo, server, photo_hash, caption='caption'):
     payload = {
         'access_token': vk_app_token,
         'group_id': owner_id,
         'photo': photo,
         'server': server,
-        'hash': hash,
+        'hash': photo_hash,
         'caption': caption,
         'v': 5.81
     }
