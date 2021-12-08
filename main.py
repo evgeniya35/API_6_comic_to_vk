@@ -21,7 +21,7 @@ def raise_vk_exception(response):
         raise requests.exceptions.HTTPError(message)
 
 
-def download_photo(url, file_name, params=None):
+def download_comic(url, file_name, params=None):
     response = requests.get(url=url, params=params)
     response.raise_for_status()
     with open(file_name, mode='wb') as file:
@@ -30,7 +30,7 @@ def download_photo(url, file_name, params=None):
     return file_name
 
 
-def get_commic(comic_num):
+def fetch_commic(comic_num):
     response = requests.get(f'https://xkcd.com/{comic_num}/info.0.json')
     response.raise_for_status()
     comic = response.json()
@@ -48,9 +48,10 @@ def get_upload_addr(vk_app_token, owner_id):
         data=payload
         )
     response.raise_for_status()
-    raise_vk_exception(response.json())
+    response = response.json()
+    raise_vk_exception(response)
     logger.info('Get addr for load comic')
-    return response.json()
+    return response['response']['upload_url']
 
 
 def upload_photo(url, vk_app_token, owner_id, file_name):
@@ -60,8 +61,9 @@ def upload_photo(url, vk_app_token, owner_id, file_name):
         }
         response = requests.post(url, files=payload)
     response.raise_for_status()
-    raise_vk_exception(response.json())
-    return response.json()
+    response = response.json()
+    raise_vk_exception(response)
+    return response['photo'], response['server'], response['hash']
 
 
 def save_photo(vk_app_token, owner_id, photo, server, photo_hash, caption='caption'):
@@ -79,8 +81,9 @@ def save_photo(vk_app_token, owner_id, photo, server, photo_hash, caption='capti
         data=payload
         )
     response.raise_for_status()
-    raise_vk_exception(response.json())
-    return response.json()
+    response = response.json()
+    raise_vk_exception(response)
+    return response['response'][0]['owner_id'], response['response'][0]['id']
 
 
 def publish_message(vk_app_token, owner_id, media_owner, media_id, text):
@@ -97,8 +100,9 @@ def publish_message(vk_app_token, owner_id, media_owner, media_id, text):
         data=payload
         )
     response.raise_for_status()
-    raise_vk_exception(response.json())
-    return response.json()['response']['post_id']
+    response = response.json()
+    raise_vk_exception(response)
+    logger.info(f'Posted message {response["response"]["post_id"]}')
 
 
 def remove_photo(file_name):
@@ -125,31 +129,14 @@ def main():
     folder = os.path.join(os.getcwd(), 'Files')
     os.makedirs(folder, exist_ok=True)
     comic_num = randint(0, get_last_comic_number())
-    alt, url = get_commic(comic_num)
+    alt, url = fetch_commic(comic_num)
     file_name = os.path.join(folder, url.split('/')[-1])
-    download_photo(url, file_name)
+    download_comic(url, file_name)
     try:
-        upload_address = get_upload_addr(vk_app_token, vk_group_id)
-        photo = upload_photo(
-            upload_address['response']['upload_url'],
-            vk_app_token,
-            vk_group_id,
-            file_name
-            )
-        photo = save_photo(
-            vk_app_token,
-            vk_group_id,
-            photo['photo'],
-            photo['server'],
-            photo['hash'])
-        message_id = publish_message(
-            vk_app_token,
-            vk_group_id,
-            photo['response'][0]['owner_id'],
-            photo['response'][0]['id'],
-            alt
-            )
-        logger.info(f'Posted message {message_id}')
+        url = get_upload_addr(vk_app_token, vk_group_id)
+        photo, server, photo_hash = upload_photo(url, vk_app_token, vk_group_id, file_name)
+        media_owner, media_id = save_photo(vk_app_token, vk_group_id, photo, server, photo_hash)
+        publish_message(vk_app_token, vk_group_id, media_owner, media_id, alt)
     except HTTPError as err:
         logger.error(err)
     finally:
