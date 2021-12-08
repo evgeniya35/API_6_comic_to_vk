@@ -71,12 +71,12 @@ def save_photo(vk_app_token, owner_id, photo, server, photo_hash, caption='capti
     return response.json()
 
 
-def publish_message(vk_app_token, owner_id, owner_media_id, media_id, text):
+def publish_message(vk_app_token, owner_id, media_owner, media_id, text):
     payload = {
         'access_token': vk_app_token,
         'owner_id': f'-{owner_id}',
         'from_group': 0,
-        'attachments': f'photo{owner_media_id}_{media_id}',
+        'attachments': f'photo{media_owner}_{media_id}',
         'message': text,
         'v': 5.81
     }
@@ -92,6 +92,8 @@ def publish_message(vk_app_token, owner_id, owner_media_id, media_id, text):
 def remove_photo(file_name):
     if os.path.isfile(file_name):
         os.remove(file_name)
+        logger.info(f'Remove {file_name}')
+
 
 def get_last_comic_number():
     url = 'https://xkcd.com/info.0.json'
@@ -99,46 +101,48 @@ def get_last_comic_number():
     response.raise_for_status()
     return response.json()['num']
 
+
 def main():
     logging.basicConfig(
-        level=logging.ERROR,
+        level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    logger.setLevel(logging.INFO)
     load_dotenv()
     vk_app_token = os.environ.get('VK_APP_TOKEN')
     vk_group_id = os.environ.get('VK_GROUP_ID')
-    comic_num = randint(0, get_last_comic_number())
     folder = os.path.join(os.getcwd(), 'Files')
     os.makedirs(folder, exist_ok=True)
+    comic_num = randint(0, get_last_comic_number())
     alt, url = get_commic(comic_num)
-    file_name = load_photo(
-        url,
-        os.path.join(folder, url.split('/')[-1])
-        )
-    upload_address = get_upload_addr(vk_app_token, vk_group_id)
-    if 'error' not in upload_address:
-        photo = upload_photo(
-            upload_address['response']['upload_url'],
-            vk_app_token,
-            vk_group_id,
-            file_name
-            )
-        photo = save_photo(
-            vk_app_token,
-            vk_group_id,
-            photo['photo'],
-            photo['server'],
-            photo['hash'])
-        message_id = publish_message(
-            vk_app_token,
-            vk_group_id,
-            photo['response'][0]['owner_id'],
-            photo['response'][0]['id'],
-            alt
-            )
+    file_name = os.path.join(folder, url.split('/')[-1])
+    load_photo(url, file_name)
+    try:
+        upload_address = get_upload_addr(vk_app_token, vk_group_id)
+        if 'error' not in upload_address:
+            photo = upload_photo(
+                upload_address['response']['upload_url'],
+                vk_app_token,
+                vk_group_id,
+                file_name
+                )
+            photo = save_photo(
+                vk_app_token,
+                vk_group_id,
+                photo['photo'],
+                photo['server'],
+                photo['hash'])
+            message_id = publish_message(
+                vk_app_token,
+                vk_group_id,
+                photo['response'][0]['owner_id'],
+                photo['response'][0]['id'],
+                alt
+                )
+            print(f'Опубликовано сообщение {message_id}')
+    except ValueError:
+        pass
+    finally:
         remove_photo(file_name)
-        print(f'Опубликовано сообщение {message_id}')
 
 
 if __name__ == '__main__':
