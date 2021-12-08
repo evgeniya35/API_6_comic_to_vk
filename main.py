@@ -6,9 +6,19 @@ import requests
 from random import randint
 
 from dotenv import load_dotenv
+from requests.exceptions import HTTPError
 
 
 logger = logging.getLogger('logger_main')
+
+
+def raise_vk_exception(response):
+    if 'error' in response:
+        message = (
+            f'Error code - {response["error"]["error_code"]}, '
+            f'{response["error"]["error_msg"]}'
+        )
+        raise requests.exceptions.HTTPError(message)
 
 
 def load_photo(url, file_name, params=None):
@@ -38,6 +48,7 @@ def get_upload_addr(vk_app_token, owner_id):
         data=payload
         )
     response.raise_for_status()
+    raise_vk_exception(response.json())
     logger.info('Get addr for load comic')
     return response.json()
 
@@ -67,7 +78,6 @@ def save_photo(vk_app_token, owner_id, photo, server, photo_hash, caption='capti
         data=payload
         )
     response.raise_for_status()
-    logger.info('Save comic to')
     return response.json()
 
 
@@ -85,7 +95,6 @@ def publish_message(vk_app_token, owner_id, media_owner, media_id, text):
         data=payload
         )
     response.raise_for_status()
-    logger.info('Publish comic to post')
     return response.json()['response']['post_id']
 
 
@@ -118,29 +127,28 @@ def main():
     load_photo(url, file_name)
     try:
         upload_address = get_upload_addr(vk_app_token, vk_group_id)
-        if 'error' not in upload_address:
-            photo = upload_photo(
-                upload_address['response']['upload_url'],
-                vk_app_token,
-                vk_group_id,
-                file_name
-                )
-            photo = save_photo(
-                vk_app_token,
-                vk_group_id,
-                photo['photo'],
-                photo['server'],
-                photo['hash'])
-            message_id = publish_message(
-                vk_app_token,
-                vk_group_id,
-                photo['response'][0]['owner_id'],
-                photo['response'][0]['id'],
-                alt
-                )
-            print(f'Опубликовано сообщение {message_id}')
-    except ValueError:
-        pass
+        photo = upload_photo(
+            upload_address['response']['upload_url'],
+            vk_app_token,
+            vk_group_id,
+            file_name
+            )
+        photo = save_photo(
+            vk_app_token,
+            vk_group_id,
+            photo['photo'],
+            photo['server'],
+            photo['hash'])
+        message_id = publish_message(
+            vk_app_token,
+            vk_group_id,
+            photo['response'][0]['owner_id'],
+            photo['response'][0]['id'],
+            alt
+            )
+        logger.info(f'Posted message {message_id}')
+    except HTTPError as err:
+        logger.error(err)
     finally:
         remove_photo(file_name)
 
