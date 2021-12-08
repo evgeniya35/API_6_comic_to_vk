@@ -60,6 +60,7 @@ def upload_photo(url, vk_app_token, owner_id, file_name):
         }
         response = requests.post(url, files=payload)
     response.raise_for_status()
+    raise_vk_exception(response.json())
     return response.json()
 
 
@@ -78,6 +79,7 @@ def save_photo(vk_app_token, owner_id, photo, server, photo_hash, caption='capti
         data=payload
         )
     response.raise_for_status()
+    raise_vk_exception(response.json())
     return response.json()
 
 
@@ -95,6 +97,7 @@ def publish_message(vk_app_token, owner_id, media_owner, media_id, text):
         data=payload
         )
     response.raise_for_status()
+    raise_vk_exception(response.json())
     return response.json()['response']['post_id']
 
 
