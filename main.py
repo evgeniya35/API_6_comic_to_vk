@@ -4,6 +4,7 @@ import os
 import requests
 
 from random import randint
+from urllib.parse import urlparse, unquote
 
 from dotenv import load_dotenv
 from requests.exceptions import HTTPError
@@ -128,9 +129,9 @@ def main():
     vk_group_id = os.environ.get('VK_GROUP_ID')
     folder = os.path.join(os.getcwd(), 'Files')
     os.makedirs(folder, exist_ok=True)
-    comic_num = randint(0, get_last_comic_number())
+    comic_num = randint(1, get_last_comic_number())
     alt, url = fetch_commic(comic_num)
-    file_name = os.path.join(folder, url.split('/')[-1])
+    file_name = os.path.join(folder, os.path.split(unquote(urlparse(url).path))[-1])
     download_comic(url, file_name)
     try:
         url = get_upload_addr(vk_app_token, vk_group_id)
